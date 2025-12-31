@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goita Rules</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Sans:wght@400;600;700&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      padding: 2rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-family: 'Noto Serif', serif;
+      margin-bottom: 1.5rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #4a5d4a;
+    }
+    p, li {
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0ddd5;
+    }
+    th {
+      background: #f0ebe3;
+      font-weight: 600;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: #4a5d4a;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">&larr; Back to game</a>
+
+  <h1>Goita <span class="kanji">ごいた</span> Rules</h1>
+
+  <p>Goita is a traditional Japanese game from Noto, Ishikawa played with 32 tiles similar to Shogi pieces.</p>
+
+  <h2>Tiles</h2>
+  <table>
+    <tr>
+      <th>Count</th>
+      <th>Symbol</th>
+      <th>Name</th>
+      <th>Points</th>
+    </tr>
+    <tr><td>2</td><td>王</td><td>King</td><td>50</td></tr>
+    <tr><td>2</td><td>飛</td><td>Rook</td><td>40</td></tr>
+    <tr><td>2</td><td>角</td><td>Bishop</td><td>40</td></tr>
+    <tr><td>4</td><td>金</td><td>Gold</td><td>30</td></tr>
+    <tr><td>4</td><td>銀</td><td>Silver</td><td>30</td></tr>
+    <tr><td>4</td><td>馬</td><td>Knight</td><td>20</td></tr>
+    <tr><td>4</td><td>香</td><td>Lance</td><td>20</td></tr>
+    <tr><td>10</td><td>し</td><td>Pawn</td><td>10</td></tr>
+  </table>
+
+  <h2>Setup</h2>
+  <p>Four players split into two teams, sitting across from each other. Each player is dealt 8 tiles. Play proceeds counter-clockwise.</p>
+
+  <h2>Objective</h2>
+  <p>Be the first team to have a player play out all their tiles. First team to reach 150 points wins the game.</p>
+
+  <h2>Gameplay</h2>
+  <p>The dealer plays two tiles: one face down (defense) and one face up (attack). The next player can either:</p>
+  <ul>
+    <li><strong>Pass</strong> - Skip their turn</li>
+    <li><strong>Play</strong> - Play two tiles: a defense tile that matches the previous attack, and a new attack tile</li>
+  </ul>
+
+  <h2>Matching Rules</h2>
+  <ul>
+    <li>Your defense tile must match the previous player's attack tile</li>
+    <li>Kings are wild and can match any tile except Lances and Pawns</li>
+    <li>Kings cannot be played as attack tiles unless one has already been played, or you have both Kings</li>
+  </ul>
+
+  <h2>Three Passes</h2>
+  <p>If three players pass in a row, the original attacker can play any defense tile face down and choose a new attack.</p>
+
+  <h2>Scoring</h2>
+  <p>When a player plays their last tile, their team scores points based on the final attack tile's value. The winning player becomes the next dealer.</p>
+
+  <h2>Winning</h2>
+  <p>The first team to reach 150 points wins the game.</p>
+</body>
+</html>

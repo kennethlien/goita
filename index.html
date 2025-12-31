@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goita</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Sans:wght@400;600;700&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Left Column -->
+    <aside id="left-panel">
+      <h1>Goita <span class="kanji">ごいた</span></h1>
+
+      <div id="room-info" class="hidden">
+        <p class="label">Room</p>
+        <div class="input-group code-group">
+          <span id="room-code"></span>
+          <button id="copy-btn">Copy</button>
+        </div>
+      </div>
+
+      <div id="game-info" class="hidden">
+        <p class="label">Score</p>
+        <p>Team A: <span id="score-a">0</span><span class="score-target">/150</span></p>
+        <p>Team B: <span id="score-b">0</span><span class="score-target">/150</span></p>
+
+        <div id="player-list">
+          <p class="label">Players</p>
+          <ul id="players"></ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Column -->
+    <main id="main-panel">
+      <!-- Lobby -->
+      <div id="lobby">
+        <div id="create-section">
+          <p>Let's play Goita. <a href="rules.html" target="_blank">See rules</a>.</p>
+          <div class="input-group">
+            <input type="text" id="host-name-input" placeholder="Your name" maxlength="12">
+            <button id="create-btn">Create</button>
+          </div>
+        </div>
+
+        <div id="waiting-section" class="hidden">
+          <p>Waiting for players... <span id="player-count">1</span>/4</p>
+          <button id="start-btn" class="hidden">Start Game</button>
+        </div>
+
+        <div id="join-section" class="hidden">
+          <p id="join-status">Finding game...</p>
+          <div class="input-group">
+            <input type="text" id="name-input" placeholder="Your name" maxlength="12">
+            <button id="join-btn">Join</button>
+          </div>
+        </div>
+
+        <div id="error-section" class="hidden">
+          <p id="error-message">This game is no longer available.</p>
+          <button id="create-new-btn">Create New Game</button>
+        </div>
+      </div>
+
+      <!-- Game Board -->
+      <div id="game" class="hidden">
+        <div id="board">
+          <!-- Partner (top) -->
+          <div id="player-top" class="player-area">
+            <div class="player-header">
+              <span class="player-name"></span>
+              <span class="cards-left"></span>
+            </div>
+            <div class="play-grid">
+              <span class="row-label defense">Defense</span>
+              <div class="defense-row"></div>
+              <span class="row-label attack">Attack</span>
+              <div class="attack-row"></div>
+            </div>
+          </div>
+
+          <!-- Middle row -->
+          <div id="middle-row">
+            <!-- Left opponent -->
+            <div id="player-left" class="player-area">
+              <div class="player-header">
+                <span class="player-name"></span>
+                <span class="cards-left"></span>
+              </div>
+              <div class="play-grid">
+                <span class="row-label defense">Defense</span>
+                <div class="defense-row"></div>
+                <span class="row-label attack">Attack</span>
+                <div class="attack-row"></div>
+              </div>
+            </div>
+
+            <!-- Center status -->
+            <div id="game-status"></div>
+
+            <!-- Right opponent -->
+            <div id="player-right" class="player-area">
+              <div class="player-header">
+                <span class="player-name"></span>
+                <span class="cards-left"></span>
+              </div>
+              <div class="play-grid">
+                <span class="row-label defense">Defense</span>
+                <div class="defense-row"></div>
+                <span class="row-label attack">Attack</span>
+                <div class="attack-row"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- You (bottom) -->
+          <div id="player-bottom" class="player-area self">
+            <div class="player-header">
+              <span class="player-name"></span>
+              <span class="cards-left"></span>
+            </div>
+            <div class="play-grid">
+              <span class="row-label defense">Defense</span>
+              <div class="defense-row"></div>
+              <span class="row-label attack">Attack</span>
+              <div class="attack-row"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Your hand -->
+        <div id="my-hand">
+          <div class="hand-content">
+            <div class="hand-label">Your hand</div>
+            <div class="player-tiles"></div>
+          </div>
+          <div id="action-area">
+            <button id="pass-btn" disabled>Pass</button>
+            <button id="confirm-btn" disabled>Confirm</button>
+            <button id="cancel-btn" disabled>Clear</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Column -->
+    <aside id="right-panel">
+      <div id="selection-legend" class="hidden">
+        <p class="label">Selection</p>
+        <p class="legend-item"><span class="label-defense">Blue</span> = Defense</p>
+        <p class="legend-item"><span class="label-attack">Red</span> = Attack</p>
+      </div>
+      <p class="label">Log</p>
+      <div id="action-log"></div>
+    </aside>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div id="game-over" class="overlay hidden">
+    <div class="overlay-content">
+      <h2 id="winner-text"></h2>
+      <p id="final-score"></p>
+      <button id="next-round-btn">Next Round</button>
+    </div>
+  </div>
+
+  <!-- Redeal Choice Overlay -->
+  <div id="redeal-overlay" class="overlay hidden">
+    <div class="overlay-content">
+      <h2>5 Pawns</h2>
+      <p id="redeal-text"></p>
+      <div class="button-row">
+        <button id="redeal-play-btn">Play</button>
+        <button id="redeal-redeal-btn">Redeal</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
