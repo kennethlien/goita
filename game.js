@@ -259,6 +259,18 @@ function handleMessage(conn, data) {
         logRoundStart(data.dealerName);
       } else if (data.action === 'roundEnd') {
         logRoundEnd(data.teamName, data.points);
+      } else if (data.action === 'message') {
+        logAction(data.message);
+      }
+      break;
+
+    case 'redealChoice':
+      if (myIndex === 0) {
+        // Host receives choice from partner
+        handleRedealChoice(data.choice);
+      } else {
+        // Client receives broadcast to show overlay
+        showRedealChoice(data.partner, data.playerName);
       }
       break;
 
@@ -857,6 +869,7 @@ function showRoundEnd(team, points, scores, reason) {
 
 function hideOverlay() {
   document.getElementById('game-over').classList.add('hidden');
+  document.getElementById('redeal-overlay').classList.add('hidden');
 }
 
 function nextRound() {
@@ -865,6 +878,50 @@ function nextRound() {
     broadcast({ type: 'nextRound', state: createVisibleState(-1) });
   }
   hideOverlay();
+}
+
+function showRedealChoice(partnerIndex, playerName) {
+  const overlay = document.getElementById('redeal-overlay');
+  const text = document.getElementById('redeal-text');
+
+  if (partnerIndex === myIndex) {
+    text.textContent = `${playerName} has 5 pawns. Do you want to play or redeal?`;
+    document.getElementById('redeal-play-btn').disabled = false;
+    document.getElementById('redeal-redeal-btn').disabled = false;
+  } else {
+    text.textContent = `${playerName} has 5 pawns. Waiting for partner to decide...`;
+    document.getElementById('redeal-play-btn').disabled = true;
+    document.getElementById('redeal-redeal-btn').disabled = true;
+  }
+
+  overlay.classList.remove('hidden');
+}
+
+function handleRedealChoice(choice) {
+  hideOverlay();
+  if (myIndex === 0) {
+    if (choice === 'redeal') {
+      logAction('Partner chose to redeal');
+      broadcast({ type: 'log', action: 'message', message: 'Partner chose to redeal' });
+      startRound();  // Redeal
+      broadcast({ type: 'nextRound', state: createVisibleState(-1) });
+    } else {
+      logAction('Partner chose to play');
+      broadcast({ type: 'log', action: 'message', message: 'Partner chose to play' });
+      // Continue with normal play
+      state.phase = 'playing';
+      state.currentPlayer = state.dealer;
+      state.lastAttack = null;
+      state.consecutivePasses = 0;
+      state.kingPlayed = false;
+      state.freePlay = false;
+      broadcastState();
+      renderGame();
+    }
+  } else {
+    // Send choice to host
+    connections[0]?.send({ type: 'redealChoice', choice });
+  }
 }
 
 // ===================
@@ -903,6 +960,8 @@ document.getElementById('pass-btn').addEventListener('click', pass);
 document.getElementById('confirm-btn').addEventListener('click', confirmPlay);
 document.getElementById('cancel-btn').addEventListener('click', cancelSelection);
 document.getElementById('next-round-btn').addEventListener('click', nextRound);
+document.getElementById('redeal-play-btn').addEventListener('click', () => handleRedealChoice('play'));
+document.getElementById('redeal-redeal-btn').addEventListener('click', () => handleRedealChoice('redeal'));
 
 // Check if joining via link
 const roomId = getRoomFromUrl();
