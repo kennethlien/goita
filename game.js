@@ -1,17 +1,81 @@
 // Goita - P2P Implementation
 
 // ===================
+// AUDIO
+// ===================
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// Unlock audio context on first user interaction
+function unlockAudio() {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  document.removeEventListener('click', unlockAudio);
+  document.removeEventListener('keydown', unlockAudio);
+}
+document.addEventListener('click', unlockAudio);
+document.addEventListener('keydown', unlockAudio);
+
+function playTone(frequency, duration, type = 'sine', volume = 0.3) {
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  oscillator.frequency.value = frequency;
+  oscillator.type = type;
+  gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+  oscillator.start(audioCtx.currentTime);
+  oscillator.stop(audioCtx.currentTime + duration);
+}
+
+const sounds = {
+  select: () => playTone(600, 0.08, 'sine', 0.2),
+  deselect: () => playTone(400, 0.08, 'sine', 0.15),
+  play: () => {
+    playTone(523, 0.1, 'sine', 0.25);  // C5
+    setTimeout(() => playTone(659, 0.1, 'sine', 0.25), 80);  // E5
+  },
+  pass: () => playTone(300, 0.15, 'triangle', 0.2),
+  yourTurn: () => {
+    playTone(523, 0.12, 'sine', 0.3);  // C5
+    setTimeout(() => playTone(659, 0.12, 'sine', 0.3), 100);  // E5
+    setTimeout(() => playTone(784, 0.15, 'sine', 0.3), 200);  // G5
+  },
+  win: () => {
+    playTone(523, 0.15, 'sine', 0.3);
+    setTimeout(() => playTone(659, 0.15, 'sine', 0.3), 120);
+    setTimeout(() => playTone(784, 0.15, 'sine', 0.3), 240);
+    setTimeout(() => playTone(1047, 0.3, 'sine', 0.35), 360);
+  },
+  lose: () => {
+    playTone(400, 0.2, 'sine', 0.25);
+    setTimeout(() => playTone(350, 0.2, 'sine', 0.25), 150);
+    setTimeout(() => playTone(300, 0.3, 'sine', 0.2), 300);
+  },
+  error: () => playTone(200, 0.15, 'square', 0.15),
+  gameStart: () => {
+    playTone(392, 0.1, 'sine', 0.25);  // G4
+    setTimeout(() => playTone(523, 0.1, 'sine', 0.25), 100);  // C5
+    setTimeout(() => playTone(659, 0.15, 'sine', 0.3), 200);  // E5
+  }
+};
+
+// ===================
 // TILE DEFINITIONS
 // ===================
 const TILE_TYPES = {
-  KING:   { symbol: '王', name: 'King',   shortName: 'King',   points: 50, count: 2 },
-  ROOK:   { symbol: '飛', name: 'Rook',   shortName: 'Rook',   points: 40, count: 2 },
-  BISHOP: { symbol: '角', name: 'Bishop', shortName: 'Bishop', points: 40, count: 2 },
-  GOLD:   { symbol: '金', name: 'Gold',   shortName: 'Gold',   points: 30, count: 4 },
-  SILVER: { symbol: '銀', name: 'Silver', shortName: 'Silver', points: 30, count: 4 },
-  KNIGHT: { symbol: '馬', name: 'Knight', shortName: 'Knight', points: 20, count: 4 },
-  LANCE:  { symbol: '香', name: 'Lance',  shortName: 'Lance',  points: 20, count: 4 },
-  PAWN:   { symbol: 'し', name: 'Pawn',   shortName: 'Pawn',   points: 10, count: 10 }
+  KING:   { symbol: '王', name: 'King',   shortName: 'Mew',       pokemon: 'Mew',       points: 50, count: 2 },
+  ROOK:   { symbol: '飛', name: 'Rook',   shortName: 'Charizard', pokemon: 'Charizard', points: 40, count: 2 },
+  BISHOP: { symbol: '角', name: 'Bishop', shortName: 'Dragonite', pokemon: 'Dragonite', points: 40, count: 2 },
+  GOLD:   { symbol: '金', name: 'Gold',   shortName: 'Raichu',    pokemon: 'Raichu',    points: 30, count: 4 },
+  SILVER: { symbol: '銀', name: 'Silver', shortName: 'Pikachu',   pokemon: 'Pikachu',   points: 30, count: 4 },
+  KNIGHT: { symbol: '馬', name: 'Knight', shortName: 'Ponyta',    pokemon: 'Ponyta',    points: 20, count: 4 },
+  LANCE:  { symbol: '香', name: 'Lance',  shortName: 'Rattata',   pokemon: 'Rattata',   points: 20, count: 4 },
+  PAWN:   { symbol: 'し', name: 'Pawn',   shortName: 'Pidgey',    pokemon: 'Pidgey',    points: 10, count: 10 }
 };
 
 function renderTile(tile, extraClasses = '') {
@@ -85,6 +149,7 @@ let state = {
 let myIndex = -1;
 let peer = null;
 let connections = [];
+let previousTurnPlayer = null;
 
 // ===================
 // NETWORKING
@@ -99,7 +164,7 @@ function getRoomFromUrl() {
 }
 
 function createGame() {
-  const name = document.getElementById('host-name-input').value.trim() || 'Player 1';
+  const name = (document.getElementById('host-name-input').value.trim() || 'Player 1').toUpperCase();
   const roomId = generateRoomId();
   const peerId = `goita-${roomId}`;
 
@@ -253,8 +318,10 @@ function handleMessage(conn, data) {
     case 'log':
       if (data.action === 'play') {
         logPlay(data.playerName, data.defense, data.attack, data.isFirstPlay);
+        sounds.play();  // Play sound when opponent plays
       } else if (data.action === 'pass') {
         logPass(data.playerName);
+        sounds.pass();  // Play sound when opponent passes
       } else if (data.action === 'roundStart') {
         logRoundStart(data.dealerName);
       } else if (data.action === 'roundEnd') {
@@ -408,8 +475,12 @@ function canPlayAsAttack(type) {
   if (type !== 'KING') return true;
   if (state.kingPlayed) return true;
 
-  // Check if player has both kings
   const hand = state.players[state.currentPlayer].hand;
+
+  // Allow if it's the winning play (only 2 cards left)
+  if (hand.length === 2) return true;
+
+  // Check if player has both kings
   const kingCount = hand.filter(t => t.type === 'KING').length;
   return kingCount === 2;
 }
@@ -434,7 +505,9 @@ function handlePlay(playerIndex, defenseId, attackId) {
   player.hand = player.hand.filter(t => t.id !== defenseId && t.id !== attackId);
   player.played.push({ defense, attack, faceDown: isFirstPlay });
 
+  // Track if a King has appeared face-up (attack, or defense when not first play)
   if (attack.type === 'KING') state.kingPlayed = true;
+  if (defense.type === 'KING' && !isFirstPlay) state.kingPlayed = true;
 
   // Log the play
   logPlay(player.name, defense, attack, isFirstPlay);
@@ -549,9 +622,14 @@ function logAction(message) {
   log.scrollTop = log.scrollHeight;
 }
 
+function getTileName(tile) {
+  const info = TILE_TYPES[tile.type];
+  return `${info.pokemon} (${info.name})`;
+}
+
 function logPlay(playerName, defense, attack, isFirstPlay) {
-  const defenseText = isFirstPlay ? '?' : `<span class="tile-symbol">${defense.symbol}</span> (${defense.shortName})`;
-  const attackText = `<span class="tile-symbol">${attack.symbol}</span> (${attack.shortName})`;
+  const defenseText = isFirstPlay ? '?' : `<span class="tile-symbol">${defense.symbol}</span> ${getTileName(defense)}`;
+  const attackText = `<span class="tile-symbol">${attack.symbol}</span> ${getTileName(attack)}`;
   logAction(`<span class="player">${playerName}</span> played ${defenseText} → ${attackText}`);
 }
 
@@ -617,10 +695,17 @@ function startGameUI() {
   document.getElementById('game').classList.remove('hidden');
   document.getElementById('game-info').classList.remove('hidden');
   document.getElementById('selection-legend').classList.remove('hidden');
+  sounds.gameStart();
   renderGame();
 }
 
 function renderGame() {
+  // Play sound when it becomes my turn
+  if (state.currentPlayer === myIndex && previousTurnPlayer !== myIndex && previousTurnPlayer !== null) {
+    sounds.yourTurn();
+  }
+  previousTurnPlayer = state.currentPlayer;
+
   document.getElementById('score-a').textContent = state.scores[0];
   document.getElementById('score-b').textContent = state.scores[1];
   updatePlayerList();
@@ -694,7 +779,7 @@ function renderGame() {
   if (state.currentPlayer === myIndex) {
     if (state.lastAttack) {
       const attackInfo = TILE_TYPES[state.lastAttack.type];
-      statusEl.textContent = `Match ${attackInfo.symbol} (${attackInfo.shortName}) — select defense first`;
+      statusEl.textContent = `Match ${attackInfo.symbol} ${attackInfo.pokemon} (${attackInfo.name}) — select defense first`;
     } else {
       statusEl.textContent = 'Select your defense tile';
     }
@@ -740,19 +825,21 @@ function handleTileClick(tile) {
     if (state.lastAttack && !canMatch(type, state.lastAttack.type)) {
       const lastInfo = TILE_TYPES[state.lastAttack.type];
       const tileInfo = TILE_TYPES[type];
-      showInvalidTile(tile, `Can't match ${lastInfo.symbol} (${lastInfo.shortName}) with ${tileInfo.symbol} (${tileInfo.shortName})`);
+      showInvalidTile(tile, `Can't match ${lastInfo.pokemon} with ${tileInfo.pokemon}`);
       return;
     }
 
     selectedDefense = id;
     tile.classList.add('selected-defense');
+    sounds.select();
   }
   // If defense selected but no attack, select as attack
   else if (selectedAttack === null) {
     // Validate attack selection (King restrictions)
     if (type === 'KING' && !state.kingPlayed) {
+      const isWinningPlay = player.hand.length === 2;
       const kingCount = player.hand.filter(t => t.type === 'KING').length;
-      if (kingCount < 2) {
+      if (!isWinningPlay && kingCount < 2) {
         showInvalidTile(tile, 'Need both Kings to attack with King first');
         return;
       }
@@ -760,6 +847,7 @@ function handleTileClick(tile) {
 
     selectedAttack = id;
     tile.classList.add('selected-attack');
+    sounds.select();
   }
 
   updateActionButtons();
@@ -769,6 +857,7 @@ function handleTileClick(tile) {
 function showInvalidTile(tile, message) {
   tile.classList.add('invalid');
   setTimeout(() => tile.classList.remove('invalid'), 300);
+  sounds.error();
 
   const statusEl = document.getElementById('game-status');
   statusEl.textContent = message;
@@ -806,7 +895,7 @@ function updateGameStatus() {
     statusEl.textContent = 'Now select your attack tile';
   } else if (state.lastAttack) {
     const attackInfo = TILE_TYPES[state.lastAttack.type];
-    statusEl.textContent = `Match ${attackInfo.symbol} (${attackInfo.shortName}) — select defense first`;
+    statusEl.textContent = `Match ${attackInfo.symbol} ${attackInfo.pokemon} (${attackInfo.name}) — select defense first`;
   } else {
     statusEl.textContent = 'Select your defense tile';
   }
@@ -815,13 +904,15 @@ function updateGameStatus() {
 function confirmPlay() {
   if (selectedDefense === null || selectedAttack === null) return;
 
+  sounds.play();
+
   if (myIndex === 0) {
     handlePlay(0, selectedDefense, selectedAttack);
   } else {
     sendToHost({ type: 'play', defense: selectedDefense, attack: selectedAttack });
   }
 
-  clearSelection();
+  clearSelection(false);  // Don't play deselect sound after play
 }
 
 function cancelSelection() {
@@ -829,16 +920,20 @@ function cancelSelection() {
   renderGame();
 }
 
-function clearSelection() {
+function clearSelection(playSound = true) {
+  const hadSelection = selectedDefense !== null || selectedAttack !== null;
   selectedDefense = null;
   selectedAttack = null;
   document.querySelectorAll('.tile.selected-defense, .tile.selected-attack').forEach(t => {
     t.classList.remove('selected-defense', 'selected-attack');
   });
   updateActionButtons();
+  if (playSound && hadSelection) sounds.deselect();
 }
 
 function pass() {
+  sounds.pass();
+
   if (myIndex === 0) {
     handlePass(0);
   } else {
@@ -855,6 +950,14 @@ function showRoundEnd(team, points, scores, reason) {
   const teamName = team === 0 ? 'Team A' : 'Team B';
   winnerText.textContent = `${teamName} wins the round!`;
   finalScore.textContent = `+${points} points${reason ? ` (${reason})` : ''}\nTeam A: ${scores[0]} | Team B: ${scores[1]}`;
+
+  // Play win/lose sound based on my team
+  const myTeam = myIndex % 2;
+  if (team === myTeam) {
+    sounds.win();
+  } else {
+    sounds.lose();
+  }
 
   overlay.classList.remove('hidden');
 
@@ -928,6 +1031,9 @@ function handleRedealChoice(choice) {
 // INITIALIZATION
 // ===================
 document.getElementById('create-btn').addEventListener('click', createGame);
+document.getElementById('host-name-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') createGame();
+});
 
 document.getElementById('copy-btn').addEventListener('click', () => {
   const copyBtn = document.getElementById('copy-btn');
@@ -936,13 +1042,18 @@ document.getElementById('copy-btn').addEventListener('click', () => {
   setTimeout(() => copyBtn.textContent = 'Copy', 1500);
 });
 
-document.getElementById('join-btn').addEventListener('click', () => {
-  const name = document.getElementById('name-input').value.trim() || 'Player';
+function doJoin() {
+  const name = (document.getElementById('name-input').value.trim() || 'Player').toUpperCase();
   const roomId = getRoomFromUrl();
   const btn = document.getElementById('join-btn');
   btn.textContent = 'Joining...';
   btn.disabled = true;
   joinGame(roomId, name);
+}
+
+document.getElementById('join-btn').addEventListener('click', doJoin);
+document.getElementById('name-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doJoin();
 });
 
 document.getElementById('start-btn').addEventListener('click', () => {
