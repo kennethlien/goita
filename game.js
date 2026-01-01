@@ -1028,7 +1028,11 @@ function handleRedealChoice(choice) {
       state.consecutivePasses = 0;
       state.kingPlayed = false;
       state.freePlay = false;
-      broadcastState();
+      // Use nextRound to ensure all clients hide the overlay
+      for (const conn of connections) {
+        const visibleState = createVisibleState(conn.playerIndex);
+        conn.send({ type: 'nextRound', state: visibleState });
+      }
       renderGame();
     }
   } else {
@@ -1080,6 +1084,50 @@ document.getElementById('start-btn').addEventListener('click', () => {
 document.getElementById('pass-btn').addEventListener('click', pass);
 document.getElementById('confirm-btn').addEventListener('click', confirmPlay);
 document.getElementById('cancel-btn').addEventListener('click', cancelSelection);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Don't trigger if typing in an input
+  if (e.target.tagName === 'INPUT') return;
+
+  // Only handle game shortcuts when game is active
+  if (state.phase !== 'playing') return;
+
+  // 1-8: Select tile by index
+  if (e.key >= '1' && e.key <= '8') {
+    const index = parseInt(e.key) - 1;
+    const tiles = document.querySelectorAll('#my-hand .player-tiles .tile');
+    if (index < tiles.length) {
+      handleTileClick(tiles[index]);
+    }
+    return;
+  }
+
+  // P: Pass
+  if (e.key === 'p' || e.key === 'P') {
+    const passBtn = document.getElementById('pass-btn');
+    if (!passBtn.disabled) {
+      pass();
+    }
+    return;
+  }
+
+  // Enter: Confirm
+  if (e.key === 'Enter') {
+    const confirmBtn = document.getElementById('confirm-btn');
+    if (!confirmBtn.disabled) {
+      confirmPlay();
+    }
+    return;
+  }
+
+  // Backspace: Clear selection
+  if (e.key === 'Backspace') {
+    e.preventDefault();  // Prevent browser back
+    cancelSelection();
+    return;
+  }
+});
 document.getElementById('next-round-btn').addEventListener('click', nextRound);
 document.getElementById('redeal-play-btn').addEventListener('click', () => handleRedealChoice('play'));
 document.getElementById('redeal-redeal-btn').addEventListener('click', () => handleRedealChoice('redeal'));
