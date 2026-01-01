@@ -167,6 +167,19 @@ button:disabled {
   cursor: not-allowed;
 }
 
+#action-area button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-width: 90px;
+}
+
+#action-area button .key {
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+
 /* Lobby */
 #lobby {
   text-align: center;
@@ -350,6 +363,22 @@ button:disabled {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.tile-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.tile-key {
+  font-size: 0.65rem;
+  color: #8a9a8a;
+  background: #e8e4dc;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
 }
 
 /* Tiles */

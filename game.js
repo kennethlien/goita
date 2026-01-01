@@ -782,7 +782,12 @@ function renderGame() {
   const player = state.players[myIndex];
   const hand = player?.hand || [];
   const tilesEl = myHand.querySelector('.player-tiles');
-  tilesEl.innerHTML = hand.map(t => renderTile(t, 'selectable')).join('');
+  tilesEl.innerHTML = hand.map((t, i) => `
+    <div class="tile-wrapper">
+      ${renderTile(t, 'selectable')}
+      <span class="tile-key">${i + 1}</span>
+    </div>
+  `).join('');
 
   // Game status
   const statusEl = document.getElementById('game-status');
@@ -1164,6 +1169,7 @@ function checkRoomExists(roomId) {
       document.getElementById('join-status').textContent = 'Enter your name to join:';
       document.getElementById('join-btn').classList.remove('hidden');
       document.getElementById('name-input').classList.remove('hidden');
+      document.getElementById('name-input').focus();
     });
 
     conn.on('error', () => {

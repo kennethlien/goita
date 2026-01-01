@@ -44,7 +44,7 @@
         <div id="create-section">
           <p>Let's play Goita. <a href="rules.html" target="_blank">See rules</a>.</p>
           <div class="input-group">
-            <input type="text" id="host-name-input" placeholder="Your name" maxlength="12">
+            <input type="text" id="host-name-input" placeholder="Your name" maxlength="12" autofocus>
             <button id="create-btn">Create</button>
           </div>
         </div>
@@ -141,9 +141,9 @@
             <div class="player-tiles"></div>
           </div>
           <div id="action-area">
-            <button id="pass-btn" disabled>Pass</button>
-            <button id="confirm-btn" disabled>Confirm</button>
-            <button id="cancel-btn" disabled>Clear</button>
+            <button id="pass-btn" disabled>Pass <span class="key">P</span></button>
+            <button id="confirm-btn" disabled>Confirm <span class="key">↵</span></button>
+            <button id="cancel-btn" disabled>Clear <span class="key">⌫</span></button>
           </div>
         </div>
       </div>
