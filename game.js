@@ -68,22 +68,28 @@ const sounds = {
 // TILE DEFINITIONS
 // ===================
 const TILE_TYPES = {
-  KING:   { symbol: '王', name: 'King',   shortName: 'Mew',       pokemon: 'Mew',       points: 50, count: 2 },
-  ROOK:   { symbol: '飛', name: 'Rook',   shortName: 'Charizard', pokemon: 'Charizard', points: 40, count: 2 },
-  BISHOP: { symbol: '角', name: 'Bishop', shortName: 'Dragonite', pokemon: 'Dragonite', points: 40, count: 2 },
-  GOLD:   { symbol: '金', name: 'Gold',   shortName: 'Raichu',    pokemon: 'Raichu',    points: 30, count: 4 },
-  SILVER: { symbol: '銀', name: 'Silver', shortName: 'Pikachu',   pokemon: 'Pikachu',   points: 30, count: 4 },
-  KNIGHT: { symbol: '馬', name: 'Knight', shortName: 'Ponyta',    pokemon: 'Ponyta',    points: 20, count: 4 },
-  LANCE:  { symbol: '香', name: 'Lance',  shortName: 'Rattata',   pokemon: 'Rattata',   points: 20, count: 4 },
-  PAWN:   { symbol: 'し', name: 'Pawn',   shortName: 'Pidgey',    pokemon: 'Pidgey',    points: 10, count: 10 }
+  MEW:     { symbol: '王', name: 'King',   shortName: 'Mew',       pokemon: 'Mew',       sprite: 'mew.gif',       points: 50, count: 1, isKing: true },
+  MEWTWO:  { symbol: '王', name: 'King',   shortName: 'Mewtwo',    pokemon: 'Mewtwo',    sprite: 'mewtwo.gif',    points: 50, count: 1, isKing: true },
+  ROOK:    { symbol: '飛', name: 'Rook',   shortName: 'Charizard', pokemon: 'Charizard', sprite: 'charizard.gif', points: 40, count: 2 },
+  BISHOP:  { symbol: '角', name: 'Bishop', shortName: 'Dragonite', pokemon: 'Dragonite', sprite: 'dragonite.gif', points: 40, count: 2 },
+  GOLD:    { symbol: '金', name: 'Gold',   shortName: 'Raichu',    pokemon: 'Raichu',    sprite: 'raichu.gif',    points: 30, count: 4 },
+  SILVER:  { symbol: '銀', name: 'Silver', shortName: 'Pikachu',   pokemon: 'Pikachu',   sprite: 'pikachu.gif',   points: 30, count: 4 },
+  KNIGHT:  { symbol: '馬', name: 'Knight', shortName: 'Ponyta',    pokemon: 'Ponyta',    sprite: 'ponyta.gif',    points: 20, count: 4 },
+  LANCE:   { symbol: '香', name: 'Lance',  shortName: 'Rattata',   pokemon: 'Rattata',   sprite: 'rattata.gif',   points: 20, count: 4 },
+  PAWN:    { symbol: 'し', name: 'Pawn',   shortName: 'Pidgey',    pokemon: 'Pidgey',    sprite: 'pidgey.gif',    points: 10, count: 10 }
 };
+
+function isKing(type) {
+  return TILE_TYPES[type]?.isKing === true;
+}
 
 function renderTile(tile, extraClasses = '') {
   const info = TILE_TYPES[tile.type];
   return `<div class="tile ${extraClasses}" data-id="${tile.id}" data-type="${tile.type}">
     <span class="tile-count">×${info.count}</span>
-    <span class="kanji">${tile.symbol}</span>
-    <span class="english">${tile.shortName}</span>
+    <img class="sprite" src="sprites/${info.sprite}" alt="${info.pokemon}">
+    <span class="pokemon-name">${info.shortName}</span>
+    <span class="tile-role">${info.symbol} ${info.name}</span>
     <span class="tile-points">${info.points}pt</span>
   </div>`;
 }
@@ -98,8 +104,9 @@ function renderPlayedFaceDown(tile = null) {
     const info = TILE_TYPES[tile.type];
     return `<div class="tile played-face-down mine" data-id="${tile.id}" data-type="${tile.type}">
       <span class="tile-count">×${info.count}</span>
-      <span class="kanji">${tile.symbol}</span>
-      <span class="english">${tile.shortName}</span>
+      <img class="sprite" src="sprites/${info.sprite}" alt="${info.pokemon}">
+      <span class="pokemon-name">${info.shortName}</span>
+      <span class="tile-role">${info.symbol} ${info.name}</span>
       <span class="tile-points">${info.points}pt</span>
     </div>`;
   }
@@ -467,12 +474,15 @@ function startRound() {
 
 function canMatch(defenseType, attackType) {
   if (defenseType === attackType) return true;
-  if (defenseType === 'KING' && attackType !== 'LANCE' && attackType !== 'PAWN') return true;
+  // Kings match each other
+  if (isKing(defenseType) && isKing(attackType)) return true;
+  // Kings are wild (except against Lance and Pawn)
+  if (isKing(defenseType) && attackType !== 'LANCE' && attackType !== 'PAWN') return true;
   return false;
 }
 
 function canPlayAsAttack(type) {
-  if (type !== 'KING') return true;
+  if (!isKing(type)) return true;
   if (state.kingPlayed) return true;
 
   const hand = state.players[state.currentPlayer].hand;
@@ -481,7 +491,7 @@ function canPlayAsAttack(type) {
   if (hand.length === 2) return true;
 
   // Check if player has both kings
-  const kingCount = hand.filter(t => t.type === 'KING').length;
+  const kingCount = hand.filter(t => isKing(t.type)).length;
   return kingCount === 2;
 }
 
@@ -506,8 +516,8 @@ function handlePlay(playerIndex, defenseId, attackId) {
   player.played.push({ defense, attack, faceDown: isFirstPlay });
 
   // Track if a King has appeared face-up (attack, or defense when not first play)
-  if (attack.type === 'KING') state.kingPlayed = true;
-  if (defense.type === 'KING' && !isFirstPlay) state.kingPlayed = true;
+  if (isKing(attack.type)) state.kingPlayed = true;
+  if (isKing(defense.type) && !isFirstPlay) state.kingPlayed = true;
 
   // Log the play
   logPlay(player.name, defense, attack, isFirstPlay);
@@ -836,9 +846,9 @@ function handleTileClick(tile) {
   // If defense selected but no attack, select as attack
   else if (selectedAttack === null) {
     // Validate attack selection (King restrictions)
-    if (type === 'KING' && !state.kingPlayed) {
+    if (isKing(type) && !state.kingPlayed) {
       const isWinningPlay = player.hand.length === 2;
-      const kingCount = player.hand.filter(t => t.type === 'KING').length;
+      const kingCount = player.hand.filter(t => isKing(t.type)).length;
       if (!isWinningPlay && kingCount < 2) {
         showInvalidTile(tile, 'Need both Kings to attack with King first');
         return;

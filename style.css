@@ -354,31 +354,44 @@ button:disabled {
 
 /* Tiles */
 .tile {
-  width: 52px;
-  height: 68px;
+  width: 60px;
+  height: 90px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   font-family: 'Noto Sans JP', sans-serif;
   background: #f5f0e6;
   position: relative;
-  padding: 8px 2px 4px;
-  clip-path: polygon(50% 0%, 100% 18%, 100% 100%, 0% 100%, 0% 18%);
+  padding: 12px 4px 14px;
+  clip-path: polygon(50% 0%, 100% 14%, 100% 100%, 0% 100%, 0% 14%);
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.tile .kanji {
-  font-size: 1.3rem;
-  font-weight: 600;
-  line-height: 1;
+.tile .sprite {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  margin-top: 2px;
 }
 
-.tile .english {
+.tile .pokemon-name {
   font-family: 'Noto Sans', sans-serif;
   font-size: 0.5rem;
   text-transform: uppercase;
-  color: #5a5a5a;
+  font-weight: 600;
+  color: #3a3a3a;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.tile .tile-role {
+  font-family: 'Noto Sans JP', 'Noto Sans', sans-serif;
+  font-size: 0.45rem;
+  color: #6b7c6b;
+  margin-top: 1px;
+  line-height: 1;
 }
 
 .tile-count {
@@ -413,8 +426,9 @@ button:disabled {
   height: 42px;
 }
 
-.tile.face-down .kanji,
-.tile.face-down .english,
+.tile.face-down .sprite,
+.tile.face-down .pokemon-name,
+.tile.face-down .tile-role,
 .tile.face-down .tile-count,
 .tile.face-down .tile-points {
   display: none;
@@ -425,8 +439,9 @@ button:disabled {
   border-color: #8b8275;
 }
 
-.tile.played-face-down .kanji,
-.tile.played-face-down .english,
+.tile.played-face-down .sprite,
+.tile.played-face-down .pokemon-name,
+.tile.played-face-down .tile-role,
 .tile.played-face-down .tile-count,
 .tile.played-face-down .tile-points {
   opacity: 0;
@@ -441,8 +456,9 @@ button:disabled {
   background: #f5f0e6;
 }
 
-.tile.played-face-down.mine:hover .kanji,
-.tile.played-face-down.mine:hover .english,
+.tile.played-face-down.mine:hover .sprite,
+.tile.played-face-down.mine:hover .pokemon-name,
+.tile.played-face-down.mine:hover .tile-role,
 .tile.played-face-down.mine:hover .tile-count,
 .tile.played-face-down.mine:hover .tile-points {
   opacity: 1;
@@ -451,7 +467,9 @@ button:disabled {
 .tile.empty-slot {
   background: #f0ebe3;
   border: none;
-  opacity: 0.5;
+  opacity: 0.4;
+  width: 60px;
+  height: 90px;
 }
 
 .tile.selectable {
@@ -464,10 +482,10 @@ button:disabled {
 
 .tile.selected-defense {
   background: #e8f0f8;
+  box-shadow: 0 0 0 2px #4a7090;
 }
 
-.tile.selected-defense .kanji,
-.tile.selected-defense .english {
+.tile.selected-defense .pokemon-name {
   color: #4a7090;
 }
 
@@ -488,10 +506,10 @@ button:disabled {
 
 .tile.selected-attack {
   background: #f8e8e8;
+  box-shadow: 0 0 0 2px #905050;
 }
 
-.tile.selected-attack .kanji,
-.tile.selected-attack .english {
+.tile.selected-attack .pokemon-name {
   color: #905050;
 }
 
